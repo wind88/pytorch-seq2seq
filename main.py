@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parse.add_argument('-p', '--rnn-type', default='lstm', type=str)
     parse.add_argument('-is', '--input-size', default=20, type=int)
     parse.add_argument('-hs', '--hidden-size', default=128, type=int)
-    parse.add_argument('-r', '--num-layers', default=1, type=int)
+    parse.add_argument('-r', '--num-layers', default=2, type=int)
     parse.add_argument('-d', '--dropout', default=0.5, type=float)
     parse.add_argument('-u', '--use-attn', default=1, type=int)
     args = parse.parse_args()

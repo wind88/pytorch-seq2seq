@@ -43,10 +43,8 @@ class trainer:
         try:
             self.text.words_to_id = torch.load(self.text.words_file)
         except FileNotFoundError:
-            self.text.readData(True)
+            self.text.readData()
             self.text.saveTrainData()
-            self.text.readData(False)
-            self.text.saveTestData()
             self.text.saveWordToIdData()
 
     def getBucketSize(self):
@@ -72,8 +70,10 @@ class trainer:
 
         for epoch in range(self.epochs):
             train_acc, train_loss = self.train(model, entropy_loss, optimizer)
-            test_acc, test_loss = self.test(model, entropy_loss)
-            self.saveModel(test_acc, epoch, model, optimizer)
+            print('step '+str(epoch+1)+':', train_acc, train_loss)
+            self.train_acc_arr.append(train_acc)
+            self.train_loss_arr.append(train_loss)
+            self.saveModel(train_acc, epoch, model, optimizer)
         self.saveAccImg()
 
     def train(self, model, entropy_loss, optimizer):
@@ -95,36 +95,7 @@ class trainer:
             total_num += bucket_num
             total_losses += bucket_loss_val
             losses_num += bucket_loss_num
-        train_acc, train_loss = total_acc/total_num, total_losses/losses_num
-        print('train', train_acc, train_loss)
-        self.train_acc_arr.append(train_acc)
-        self.train_loss_arr.append(train_loss)
-        return train_acc, train_loss
-
-    def test(self, model, entropy_loss):
-        """
-        测试
-        :param model:
-        :param entropy_loss:
-        :param optimizer:
-        :return:
-        """
-        total_acc, total_num, total_losses, losses_num = 0, 0, 0, 0
-        for bucket in range(self.bucket_num):
-            dataset = bucketDataset(False, bucket, self.bucket_size, self.max_words)
-            if dataset.__len__() == 0:
-                continue
-            dataloader = data.DataLoader(dataset, batch_size=self.batch_size, shuffle=self.shuffle)
-            bucket_acc, bucket_num, bucket_loss_val, bucket_loss_num = self.testBucket(model, dataloader, entropy_loss)
-            total_acc += bucket_acc
-            total_num += bucket_num
-            total_losses += bucket_loss_val
-            losses_num += bucket_loss_num
-        test_acc, test_loss = total_acc/total_num, total_losses/losses_num
-        print('test:', test_acc, test_loss)
-        self.test_acc_arr.append(test_acc)
-        self.test_loss_arr.append(test_loss)
-        return test_acc, test_loss
+        return total_acc/total_num, total_losses/losses_num
 
     def trainBucket(self, model, dataloader, entropy_loss, optimizer):
         """
@@ -160,36 +131,6 @@ class trainer:
             # print(train_acc, train_num, loss_val, loss_num)
         return train_acc, train_num, loss_val, loss_num
 
-    def testBucket(self, model, dataloader, entropy_loss):
-        """
-        分桶分批次测试数据
-        :param model:
-        :param dataloader:
-        :param entropy_loss:
-        :return:
-        """
-        model.eval()
-        test_acc, test_num, test_loss_val, test_loss_num = 0, 0, 0, 0
-        with torch.no_grad():
-            for encode_inputs, decode_inputs, targets, inputs_length, targets_length in dataloader:
-                encode_inputs = encode_inputs.to(device)
-                decode_inputs = decode_inputs.to(device)
-                inputs_length = inputs_length.to(device)
-                targets = targets.to(device)
-                out = model(encode_inputs, decode_inputs, inputs_length)
-
-                loss = 0
-                for index, batch in enumerate(out):
-                    loss += entropy_loss(batch, targets[index])
-                    test_loss_val += loss.item()
-                    test_loss_num += 1
-
-                    pred = torch.max(batch, 1)[1]   # 计算预测结果
-                    test_acc += (pred == targets[index]).sum().item()
-                    test_num += len(targets[index])
-            # print(test_acc, test_num, test_loss_val, loss_num)
-        return test_acc, test_num, test_loss_val, test_loss_num
-
     def saveModel(self, acc, epoch, model, optimizer):
         """
         保存模型
@@ -215,13 +156,10 @@ class trainer:
         保存准确率图片
         :return:
         """
+        plt.figure()
         plt.switch_backend('agg')
         plt.plot(range(len(self.train_acc_arr)), self.train_acc_arr, 'm-', label='train_acc')
-        plt.plot(range(len(self.test_acc_arr)), self.test_acc_arr, 'y-', label='test_acc')
         plt.savefig(self.text.data_path+'acc.jpg')
-        plt.plot(range(len(self.train_loss_arr)), self.train_loss_arr, 'm-', label='train_loss')
-        plt.plot(range(len(self.test_loss_arr)), self.test_loss_arr, 'y-', label='test_loss')
-        plt.savefig(self.text.data_path+'loss.jpg')
 
 
 if __name__ == '__main__':

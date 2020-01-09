@@ -13,9 +13,9 @@ class encode(nn.Module):
         self.hidden_size = hidden_size
         self.embedding = nn.Embedding(vocab_size, input_size)
         if rnn_type == 'lstm':
-            self.rnn = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, dropout=dropout)
+            self.rnn = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, dropout=dropout, batch_first=True)
         else:
-            self.rnn = nn.GRU(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, dropout=dropout)
+            self.rnn = nn.GRU(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, dropout=dropout, batch_first=True)
 
     def forward(self, encode_val, input_length):
         encode_val = self.embedding(encode_val)

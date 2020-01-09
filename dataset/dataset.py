@@ -49,21 +49,18 @@ class textData:
         self.bucket_size = []
         self.data = []
         self.train_file = self.data_path+'train.txt'
-        self.test_file = self.data_path+'test.txt'
         self.bucket_train_file = self.data_path+'bucket_train_{}_{}.patch'
-        self.bucket_test_file = self.data_path+'bucket_test_{}_{}.patch'
         self.words_file = self.data_path+'words_to_id.patch'
         self.resume_model_file = self.data_path+'resume.pkl'
         self.best_model_file = self.data_path+'best.pkl'
         self.max_words = max_words
 
-    def readData(self, is_train=True):
+    def readData(self):
         """
         读取训练数据
         :return:
         """
-        file = self.train_file if is_train else self.test_file
-        with open(file, 'r', encoding='utf-8') as fp:
+        with open(self.train_file, 'r', encoding='utf-8') as fp:
             lines = fp.readlines()
         iters = iter(lines)
         data = [[l, next(iters)] for l in iters]
@@ -76,14 +73,6 @@ class textData:
         """
         for index, buckets in enumerate(self.data):
             torch.save(buckets, self.bucket_train_file.format(self.bucket_size[index][0], self.bucket_size[index][1]))
-
-    def saveTestData(self):
-        """
-        保存分桶测试数据
-        :return:
-        """
-        for index, buckets in enumerate(self.data):
-            torch.save(buckets, self.bucket_test_file.format(self.bucket_size[index][0], self.bucket_size[index][1]))
 
     def saveWordToIdData(self):
         """

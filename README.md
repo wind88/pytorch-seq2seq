@@ -9,7 +9,7 @@ matplotlib
 ```
 
 ### 二、使用
-1.准备数据集，data目录下train.txt和test.txt格式
+1.准备数据集，data目录下train.txt格式
 
 ```
 你/好                   #问题
